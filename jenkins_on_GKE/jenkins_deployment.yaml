@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:  
+  name: jenkins-deployment
+  namespace: jenkins
+spec:  
+  replicas: 1
+  selector:    
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      serviceAccountName: jenkins-admin
+      containers:
+      - image: salmayoussef/custom_jenkins:3.0
+        name: jenkins
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/
+        resources: {}
+      volumes:
+      - name: docker-socket
+        hostPath:
+          path: /var/run/
