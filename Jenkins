@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('CI') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                git 'https://github.com/salmamyoussef26/Agile-application.git'
+                sh """
+                cd ./DevOps-Challenge-Demo-Code 
+                docker login -u ${USERNAME} -p ${PASSWORD}
+                docker build . -f Dockerfile -t salmayoussef/agile_app:1.0  --network host
+                docker push salmayoussef/agile_app:1.0
+                """
+                }
+            }
+        }
+         stage('CD') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                git 'https://github.com/salmamyoussef26/Agile-application.git' 
+                sh """
+                docker login -u ${USERNAME} -p ${PASSWORD}
+                pwd
+                kubectl create namespace app
+                kubectl apply -f /var/jenkins_home/workspace/agile-app-pipeline/deployment_files/redis_deployment.yaml -n app
+                kubectl apply -f /var/jenkins_home/workspace/agile-app-pipeline/deployment_files/redis_service.yaml -n app
+                kubectl apply -f /var/jenkins_home/workspace/agile-app-pipeline/deployment_files/configmap.yaml -n app
+                kubectl apply -f /var/jenkins_home/workspace/agile-app-pipeline/deployment_files/app_deployment.yaml -n app
+                kubectl apply -f /var/jenkins_home/workspace/agile-app-pipeline/deployment_files/app_service.yaml -n app
+            
+                """
+                }
+            }
+        }
+    }
+}
